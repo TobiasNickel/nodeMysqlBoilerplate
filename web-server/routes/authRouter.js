@@ -19,10 +19,12 @@ router.post('/register', function(req, res) {
         name:req.body.name,
         mail: req.body.mail,
         password: req.body.password
-    }).then(function(user){
+    })
+    .then(function(user){
         req.session.user = user;
         res.redirect('/auth/dashboard');
-    }).catch(function(err){
+    })
+    .catch(function(err){
         console.log(err)
         res.render('register.jade', {
             error: 'could not register:'+err.message
@@ -35,15 +37,13 @@ router.get('/login', function(req, res) {
 });
 
 router.post('/login', function(req, res) {
-    userDao.getOneByMail(req.body.mail).then((user) => {
-        if (user && user.password == req.body.password) {
-            req.session.user = user;
-            res.render('dashboard.jade');
-        } else {
-            res.render('login.jade', {error: 'wrong login infos'});
-        }
-    }).catch((err) => {
-        res.render('login.jade')
+    authService.validateLogin({mail:req.body.mail, password: req.body.password})
+    .then(function(user){
+        req.session.user = user;
+        res.render('dashboard.jade');
+    })
+    .catch((err)=>{
+        res.render('login.jade', {error:'wrong login'});
     });
 });
 

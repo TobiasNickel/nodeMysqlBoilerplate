@@ -15,6 +15,7 @@ log4js.configure({
     { type: 'file', filename: './log.log'}
   ]
 });
+var logger = log4js.getLogger('{server}{server.js}');
 
 var app = express();
 

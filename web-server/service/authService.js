@@ -1,6 +1,15 @@
 var userDao = require('../dao/userDao');
 
 module.exports = {
+    validateLogin:function(options){
+        return userDao.getOneByMail(options.mail).then((user) => {
+            if (user && user.password == options.password) {
+                return user ;
+            } else {
+                res.render('login.jade', {error: 'wrong login infos'});
+            }
+        })
+    },
     /**
      * @param params {object}
      *       name {string}
