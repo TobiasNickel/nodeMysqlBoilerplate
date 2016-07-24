@@ -1,0 +1,37 @@
+{
+  "name": "temb",
+  "version": "1.0.0",
+  "description": "fast project kickoff",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TobiasNickel/texpressMysqlBoilerplate.git"
+  },
+  "keywords": [
+    "express",
+    "mysql",
+    "boilerplate"
+  ],
+  "author": "Tobias Nickel",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TobiasNickel/texpressMysqlBoilerplate/issues"
+  },
+  "homepage": "https://github.com/TobiasNickel/texpressMysqlBoilerplate#readme",
+  "dependencies": {
+    "bcryptjs": "^2.3.0",
+    "body-parser": "^1.15.2",
+    "compression": "^1.6.2",
+    "cookie-parser": "^1.4.3",
+    "csurf": "^1.9.0",
+    "express": "^4.14.0",
+    "express-mysql-session": "^1.1.1",
+    "express-session": "^1.14.0",
+    "jade": "^1.11.0",
+    "log4js": "^0.6.38",
+    "tmysqlpromisedao": "^1.0.3"
+  }
+}

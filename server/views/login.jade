@@ -1,0 +1,24 @@
+extends base
+
+block vars
+    - var title = 'Register';
+
+block body
+  h1 Create an Accout
+  
+  if error
+    p ERROR: #{error}
+  
+  form(method="post")
+    input(type="hidden", name="_csrf", value="#{csrfToken}")
+    span e-mail
+    input(name="mail" required=true)
+    br
+    
+    span password
+    input(name="password" required=true)
+    br
+    
+    input(type="submit", value="login")
+    br
+    
