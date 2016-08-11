@@ -12,7 +12,7 @@ var db = require('./utils/mysqlDB');
 log4js.configure({
   appenders: [
     { type: 'console' },
-    { type: 'file', filename: './log.log'}
+    { type: 'dateFile',pattern:'-dd', filename: './logs/log.log'}
   ]
 });
 var logger = log4js.getLogger('{server}{server.js}');
@@ -20,14 +20,18 @@ var logger = log4js.getLogger('{server}{server.js}');
 var app = express();
 
 app.set('view engine', 'jade');
-app.set('views', process.cwd()+'/server/views');
+app.set('views', process.cwd()+'/web-server/views');
 
 app.use(compression());
+app.use(log4js.connectLogger(logger, { 
+    level: log4js.levels.INFO, 
+    format: ':method\t:res[Content-Length]\t:response-time\t:remote-addr\t:url \t:referrer' // http://www.senchalabs.org/connect/logger.html
+}));
 app.use(express.static(__dirname + '/../public'));
 app.use(bodyParser.urlencoded({ extended:true }));
-
 app.use(cookieParser())
 app.use(csrfProtection);
+
 // error handler
 app.use(function (err, req, res, next) {
   if (err.code !== 'EBADCSRFTOKEN') return next(err)
@@ -60,7 +64,14 @@ app.get('/',function(req,res){
     res.render('index.jade')
 });
 
-app.use('/auth',require('./routes/authRouter'))
+app.use('/auth',require('./routes/authRouter'));
+app.use(function ensureAuthUser(req,res,next){
+    if(req.session.user){
+        next();
+    }else{
+        next(new Error('permission denied'));
+    }
+})
 
 app.use(function(req,res){
     res.json('404')

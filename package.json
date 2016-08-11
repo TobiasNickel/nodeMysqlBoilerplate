@@ -32,6 +32,6 @@
     "express-session": "^1.14.0",
     "jade": "^1.11.0",
     "log4js": "^0.6.38",
-    "tmysqlpromisedao": "^1.0.3"
+    "tmysqlpromisedao": "^1.1.10"
   }
 }
