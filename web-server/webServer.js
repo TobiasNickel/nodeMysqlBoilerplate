@@ -27,6 +27,7 @@ app.use(log4js.connectLogger(logger, {
     level: log4js.levels.INFO, 
     format: ':method\t:res[Content-Length]\t:response-time\t:remote-addr\t:url \t:referrer' // http://www.senchalabs.org/connect/logger.html
 }));
+
 app.use(express.static(__dirname + '/../public'));
 app.use(bodyParser.urlencoded({ extended:true }));
 app.use(cookieParser())
