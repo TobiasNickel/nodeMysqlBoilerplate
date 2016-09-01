@@ -1,0 +1,18 @@
+<!DOCTYPE html><% var session = req.session; %>
+<html lang="en"><head>
+  <title> Auth | register</title>
+
+</head>
+<body>
+    <h1>Create an Account</h1>
+    <% if(typeof error == 'string'){%><p>ERROR: <%= error%></p><%} %>
+    <form method="post">
+        <input type="hidden" name="_csrf" value="<%- csrfToken %>"/>
+        <span>username</span><input name="name" required="true"/><br />
+        <span>e-mail</span><input name="mail" required="true"/><br />
+        <span>password</span><input name="password" type="password" required="true"/><br />
+        <span>repeat password</span><input name="passwordRepeat" type="password" required="true"/><br />
+        <input type="submit" value="register" />
+    </form>
+</body>
+</html>

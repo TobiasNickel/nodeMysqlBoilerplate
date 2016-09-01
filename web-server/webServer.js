@@ -19,7 +19,7 @@ var logger = log4js.getLogger('{server}{server.js}');
 
 var app = express();
 
-app.set('view engine', 'jade');
+app.set('view engine', 'ejs');
 app.set('views', process.cwd()+'/web-server/views');
 
 app.use(compression());
@@ -62,7 +62,7 @@ app.use(function(req,res,next){
 });
 
 app.get('/',function(req,res){
-    res.render('index.jade')
+    res.render('index.ejs')
 });
 
 app.use('/auth',require('./routes/authRouter'));

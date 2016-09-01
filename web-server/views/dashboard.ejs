@@ -1,0 +1,25 @@
+<!DOCTYPE html><% var session = req.session; %>
+<html lang="en">
+<head>
+  <title> Auth | Dashboard</title>
+
+</head>
+<body>
+    <h1>dashboard</h1>
+    <% if(typeof error == 'string'){%><p>ERROR: <%= error%></p><%} %>
+    <p>Welcome to your dashboard.</p>
+    <h2>userinfo</h2>
+    <% var user = session.user; %>
+    <% if(user){ %>
+        <ul>
+            <li>name: <%= user.name %></li>
+            <li>verified: <%= user.verified %></li>
+            <li>email: <%= user.mail %></li>
+            <li>registration: <%= user.registrationTime %></li>
+        </ul>
+    <% } else {%>
+        <p>you are not logged in</p>
+    <%}%>
+    
+</body>
+</html>

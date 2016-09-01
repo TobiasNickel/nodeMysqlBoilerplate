@@ -1,0 +1,17 @@
+<!DOCTYPE html><% var session = req.session; %>
+<html lang="en">
+<head>
+  <title> Auth | login</title>
+
+</head>
+<body>
+    <h1>login</h1>
+    <% if(typeof error == 'string'){%><p>ERROR: <%= error%></p><%} %>
+    <form method="post">
+        <input type="hidden" name="_csrf" value="<%- csrfToken %>"/>
+        <span>e-mail</span><input name="mail" required="true"/><br />
+        <span>password</span><input name="password" type="password" required="true"/><br />
+        <input type="submit" value="login" />
+    </form>
+</body>
+</html>

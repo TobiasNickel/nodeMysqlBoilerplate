@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start":"node web-server/webServer.js",
-    "watch":"nodemon web-server/webServer.js"
+    "start": "node web-server/webServer.js",
+    "watch": "nodemon web-server/webServer.js"
   },
   "repository": {
     "type": "git",
@@ -29,12 +29,12 @@
     "compression": "^1.6.2",
     "cookie-parser": "^1.4.3",
     "csurf": "^1.9.0",
+    "ejs": "^2.5.1",
     "express": "^4.14.0",
     "express-mysql-session": "^1.1.1",
     "express-session": "^1.14.0",
-    "jade": "^1.11.0",
     "log4js": "^0.6.38",
-    "tmysqlpromisedao": "^1.1.10"
+    "tmysqlpromisedao": "^1.4.15"
   },
   "devDependencies": {
     "nodemon": "^1.10.0"
