@@ -3,7 +3,7 @@ var log4js = require('log4js');
 var bodyParser = require('body-parser');
 var session = require('express-session');
 var compression = require('compression');
-var cookieParser = require('cookie-parser')
+var cookieParser = require('cookie-parser');
 var csrf = require('csurf');
 var csrfProtection = csrf({ cookie: true });
 var MySQLStore = require('express-mysql-session')(session);
@@ -30,16 +30,16 @@ app.use(log4js.connectLogger(logger, {
 
 app.use(express.static(__dirname + '/../public'));
 app.use(bodyParser.urlencoded({ extended:true }));
-app.use(cookieParser())
+app.use(cookieParser());
 app.use(csrfProtection);
 
 // error handler
 app.use(function (err, req, res, next) {
-  if (err.code !== 'EBADCSRFTOKEN') return next(err)
+  if (err.code !== 'EBADCSRFTOKEN') return next(err);
 
   // handle CSRF token errors here
-  res.status(403)
-  res.send('form not transmitted correctly, you are save now :-)')
+  res.status(403);
+  res.send('form not transmitted correctly, you are save now :-)');
 });
 
 app.get('/csrftoken',function(req,res){
@@ -57,12 +57,12 @@ app.use(session({
 app.use(function(req,res,next){
     res.locals.req = req;
     res.locals = res.locals;
-    res.locals.csrfToken = req.csrfToken()
+    res.locals.csrfToken = req.csrfToken();
     next();
 });
 
 app.get('/',function(req,res){
-    res.render('index.ejs')
+    res.render('index.ejs');
 });
 
 app.use('/auth',require('./routes/authRouter'));
@@ -70,12 +70,12 @@ app.use(function ensureAuthUser(req,res,next){
     if(req.session.user){
         next();
     }else{
-        next(new Error('permission denied'));
+        next(new Error('permission denied'+req.url));
     }
-})
+});
 
 app.use(function(req,res){
-    res.json('404')
+    res.json('404');
 });
 
 app.listen(process.env.PORT || 3000);

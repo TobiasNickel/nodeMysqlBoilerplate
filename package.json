@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node web-server/webServer.js",
+    "start": "node web-server/startServer.js --debug=32313",
     "watch": "nodemon web-server/webServer.js"
   },
   "repository": {
@@ -24,17 +24,19 @@
   },
   "homepage": "https://github.com/TobiasNickel/texpressMysqlBoilerplate#readme",
   "dependencies": {
+    "babel-eslint": "^7.1.1",
     "bcryptjs": "^2.3.0",
     "body-parser": "^1.15.2",
     "compression": "^1.6.2",
     "cookie-parser": "^1.4.3",
     "csurf": "^1.9.0",
     "ejs": "^2.5.1",
-    "express": "^4.14.0",
-    "express-mysql-session": "^1.1.1",
-    "express-session": "^1.14.0",
+    "eslint": "^3.13.0",
+    "koa": "^2.0.0-alpha.7",
     "log4js": "^0.6.38",
-    "tmysqlpromisedao": "^1.4.15"
+    "tmysqlpromisedao": "^1.4.15",
+    "ts-node": "^2.0.0",
+    "typescript": "^2.1.4"
   },
   "devDependencies": {
     "nodemon": "^1.10.0"
