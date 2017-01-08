@@ -42,7 +42,7 @@ module.exports = {
                     name: name,
                     password: password,
                     mail: mail,
-                    registeredTime: new Date(),
+                    registrationTime: new Date(),
                     verified: false
                 };
                 userDao.insert(user).then(function(insertId) {

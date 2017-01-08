@@ -26,4 +26,5 @@ var userDao = {
     has: {}
 }
 module.exports = userDao;
-db.prepareDao(userDao);
+db.prepareDao(userDao)
+userDao.createTable().catch(err=>console.log(err));
