@@ -1,12 +1,20 @@
-var express = require('express');
+var Koa = require('koa');
+var convert = require('koa-convert');
+var route = require('koa-route');
+var render = require('koa-ejs');
 var log4js = require('log4js');
-var bodyParser = require('body-parser');
-var session = require('express-session');
-var compression = require('compression');
-var cookieParser = require('cookie-parser');
-var csrf = require('csurf');
-var csrfProtection = csrf({ cookie: true });
-var MySQLStore = require('express-mysql-session')(session);
+var path = require('path');
+var bodyParser = require('koa-bodyparser');
+import co from 'co';
+import session from "koa-session2";
+var mount = require('koa-mount');
+var compress = require('koa-compress');
+const serve = require('koa-better-serve');
+//var cookieParser = require('cookie-parser');
+//var csrf = require('csurf');
+var CSRF = require('koa-csrf');
+//var csrfProtection = csrf({ cookie: true });
+//var MySQLStore = require('express-mysql-session')(session);
 var db = require('./utils/mysqlDB');
 
 log4js.configure({
@@ -15,67 +23,91 @@ log4js.configure({
     { type: 'dateFile',pattern:'-dd', filename: './logs/log.log'}
   ]
 });
-var logger = log4js.getLogger('{server}{server.js}');
+var logger = log4js.getLogger('{server}{webServer.js}');
 
-var app = express();
+var app = new Koa();
 
-app.set('view engine', 'ejs');
-app.set('views', process.cwd()+'/web-server/views');
-
-app.use(compression());
-app.use(log4js.connectLogger(logger, { 
-    level: log4js.levels.INFO, 
-    format: ':method\t:res[Content-Length]\t:response-time\t:remote-addr\t:url \t:referrer' // http://www.senchalabs.org/connect/logger.html
-}));
-
-app.use(express.static(__dirname + '/../public'));
-app.use(bodyParser.urlencoded({ extended:true }));
-app.use(cookieParser());
-app.use(csrfProtection);
-
-// error handler
-app.use(function (err, req, res, next) {
-  if (err.code !== 'EBADCSRFTOKEN') return next(err);
-
-  // handle CSRF token errors here
-  res.status(403);
-  res.send('form not transmitted correctly, you are save now :-)');
+render(app, {
+     root: path.join(__dirname, '/views'),
+     viewExt:'ejs',
+     debug:true
+    //todo: path
 });
+app.context.render = co.wrap(app.context.render);
 
-app.get('/csrftoken',function(req,res){
-    res.json(req.csrfToken()); 
+app.use(co.wrap(compress({})));
+
+app.use(async function logging(ctx,next){
+    const start = Date.now();
+    await next();
+    const end = Date.now();
+    process.nextTick(()=>{
+        var length = ctx.response.header['content-length'] || '-';
+        logger.trace(ctx.req.method+'\t'+(end-start)+'ms\t'+length+'\t'+ ctx.req.url);
+    });
 });
 
 app.use(session({
-    secret:'asdf',
-    saveUninitialized:false,
-    resave:false,
-    store:new MySQLStore({},db.pool)
+    // secret:'asdf',
+    // saveUninitialized:false,
+    // resave:false,
+    // store:new MySQLStore({},db.pool)
+}));
+
+app.use(convert(bodyParser()));
+
+
+app.use(convert(new CSRF.default({
+    invalidSessionSecretMessage: 'Invalid session secret ff',
+    invalidSessionSecretStatusCode: 403,
+    invalidTokenMessage: 'Invalid CSRF token',
+    invalidTokenStatusCode: 403,
+    excludedMethods: [ 'GET', 'HEAD', 'OPTIONS' ],
+    disableQuery: false
+})));
+app.use(route.get('/csrftoken', async function(ctx){
+    ctx.body = ctx.csrf; 
+}));
+
+app.use(async function(ctx, next){
+    ctx.state.req = ctx.req;
+    ctx.state.res = ctx.res;
+    ctx.state.csrfToken = ctx.csrf;
+    await next();
+});
+
+app.use(route.get('/', async function(ctx){
+    console.log('route /');
+    await ctx.render('index');
 }));
 
 
-app.use(function(req,res,next){
-    res.locals.req = req;
-    res.locals = res.locals;
-    res.locals.csrfToken = req.csrfToken();
-    next();
-});
-
-app.get('/',function(req,res){
-    res.render('index.ejs');
-});
-
-app.use('/auth',require('./routes/authRouter'));
-app.use(function ensureAuthUser(req,res,next){
-    if(req.session.user){
-        next();
-    }else{
-        next(new Error('permission denied'+req.url));
+// error handler
+app.use(async function (ctx, next) {
+    try{
+        await next();
+    }catch(err){
+        if (err.code === 'EBADCSRFTOKEN') {
+            ctx.status = 403;
+            ctx.body = ('form not transmitted correctly, you are save now :-)');
+        }else{
+            ctx.body = err.message;
+        }
     }
 });
 
-app.use(function(req,res){
-    res.json('404');
+
+
+app.use(mount('/auth',require('./routes/authRouter')));
+
+app.use(async function ensureAuthUser(ctx,next){
+    if(ctx.session.user){
+        return next();
+    }else{
+        throw new Error('permission denied'+ctx.req.url);
+    }
 });
+
+app.use(serve(__dirname + '/../public'));
 
 app.listen(process.env.PORT || 3000);

@@ -1,58 +1,62 @@
-var userDao = require('../dao/userDao');
+var logger = require('log4js').getLogger('{server}{webServer.js}');
 var authService = require('../service/authService');
 
-var router = require('express').Router();
+var Koa = require('koa');
+var route = require('koa-route');
+var router = new Koa();
 module.exports = router;
 
-router.get('/register', function(req, res) {
-    res.render('register.ejs');
-});
+router.use(route.get('/register', async function(ctx, next) {
+    await ctx.render('register');
+}));
 
-router.post('/register', function(req, res) {
+router.use(route.post('/register', function(ctx) {
+    ctx.body = 'handle register';
+    return Promise.resolve('done');
+    var req = ctx.req;
     if (req.body.password != req.body.passwordRepeat) {
-        res.render('register.ejs', {
+        return ctx.render('register', {
             error: 'repeated password does not match'
-        })
-        return;
+        });
     }
-    authService.register({
+    return authService.register({
         name:req.body.name,
         mail: req.body.mail,
         password: req.body.password
     })
     .then(function(user){
         req.session.user = user;
-        res.redirect('/auth/dashboard');
+        ctx.redirect('/auth/dashboard');
     })
     .catch(function(err){
-        console.log(err)
-        res.render('register.ejs', {
+        return ctx.render('register.ejs', {
             error: 'could not register:'+err.message
         });
     });
-});
+}));
 
-router.get('/login', function(req, res) {
-    res.render('login.ejs', {});
-});
+router.use(route.get('/login', async function(req, res) {
+    await res.render('login');
+}));
 
-router.post('/login', function(req, res) {
-    authService.validateLogin({mail:req.body.mail, password: req.body.password})
+router.use(route.post('/login', function(ctx, res) {
+    var req = ctx.req;
+    return authService.validateLogin({mail:req.body.mail, password: req.body.password})
     .then(function(user){
         req.session.user = user;
-        res.render('dashboard.ejs');
+        res.render('dashboard');
     })
     .catch((err)=>{
-        res.render('login.ejs', {error:'wrong login'});
+        res.render('login', {error: err.message});
     });
-});
+}));
 
-router.get('/dashboard', function(req, res) {
-    console.log('',req.session)
-    res.render('dashboard.ejs', {});
-});
+router.use(route.get('/dashboard', function(req, res) {
+    console.log('',req.session);
+    res.render('dashboard', {});
+}));
 
-router.get('/logout', function(req, res) {
-    delete req.session.user;
-    res.redirect('/')
-});
+router.use(route.get('/logout', function(ctx) {
+    delete ctx.session.user;
+    ctx.redirect('/');
+}));

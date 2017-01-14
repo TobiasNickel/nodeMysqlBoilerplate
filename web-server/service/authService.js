@@ -38,7 +38,6 @@ authService.register = async function (params) {
         registrationTime: new Date(),
         verified: false
     };
-    console.log('register', user, authService.register.toString())
     var insertId = userDao.insert(user);
     user.id=insertId;
     return user;

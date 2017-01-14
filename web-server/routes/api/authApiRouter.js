@@ -16,7 +16,7 @@ router.post('/register', function(req, res) {
         res.json({
             error: 'could not register:'+err.message
         });
-    })
+    });
 });
 
 router.post('/login', function(req, res) {
@@ -28,7 +28,8 @@ router.post('/login', function(req, res) {
             res.render({error: 'wrong login infos'});
         }
     }).catch((err) => {
-        res.json({error:'not found'})
+        console.log(err);
+        res.json({error:'not found'});
     });
 });
 
@@ -38,5 +39,5 @@ router.get('/dashboard', function(req, res) {
 
 router.post('/logout', function(req, res) {
     delete req.session.user;
-    res.redirect('/')
+    res.redirect('/');
 });
