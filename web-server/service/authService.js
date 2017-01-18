@@ -1,11 +1,14 @@
-var userDao = require('../dao/userDao');
+const userDao = require('../dao/userDao');
+const md5 = require('md5');
 
 const authService = module.exports;
 
 authService.validateLogin = async function (options) {
-    var user = await userDao.getOneByMail(options.mail);
-    if(user.password == options.password) return user;
-    throw new Error('wrong password');
+    const mail = options.mail;
+    const password = options.password;
+    const user = await userDao.getOneByMail(mail);
+    if(user && user.password == hash(mail, password)) return user;
+    throw new Error('wrong login');
 };
 /**
  * @param params {object}
@@ -33,12 +36,15 @@ authService.register = async function (params) {
     }
     var user = {
         name: name,
-        password: password,
+        password: hash(mail,password),
         mail: mail,
         registrationTime: new Date(),
         verified: false
     };
-    var insertId = userDao.insert(user);
-    user.id=insertId;
+    user.id = await userDao.insert(user);
     return user;
 };
+
+function hash(mail,password){
+    return md5(mail+':'+password);
+}

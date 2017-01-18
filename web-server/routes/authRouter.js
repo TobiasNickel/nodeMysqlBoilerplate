@@ -6,57 +6,66 @@ var route = require('koa-route');
 var router = new Koa();
 module.exports = router;
 
-router.use(route.get('/register', async function(ctx, next) {
+router.use(route.get('/register', async function (ctx) {
     await ctx.render('register');
 }));
 
-router.use(route.post('/register', function(ctx) {
-    ctx.body = 'handle register';
-    return Promise.resolve('done');
+router.use(route.post('/register', async function (ctx) {
     var req = ctx.req;
-    if (req.body.password != req.body.passwordRepeat) {
-        return ctx.render('register', {
+    var body = ctx.request.body;
+    if (body.password != body.passwordRepeat) {
+        await ctx.render('register', {
             error: 'repeated password does not match'
         });
+        return;
     }
-    return authService.register({
-        name:req.body.name,
-        mail: req.body.mail,
-        password: req.body.password
-    })
-    .then(function(user){
-        req.session.user = user;
-        ctx.redirect('/auth/dashboard');
-    })
-    .catch(function(err){
-        return ctx.render('register.ejs', {
-            error: 'could not register:'+err.message
+    try{
+        console.log('register body',body)
+        var user = await authService.register({
+            name: body.name,
+            mail: body.mail,
+            password: body.password
         });
-    });
+        console.log('new registered user',user);
+        ctx.session.userId = user.id;
+        ctx.redirect('/auth/dashboard');
+    }catch(err){
+        await ctx.render('register', {
+            error: 'could not register:' + err.message
+        });
+    }
 }));
 
-router.use(route.get('/login', async function(req, res) {
-    await res.render('login');
+router.use(route.get('/login', async function (ctx) {
+    // console.log('ctx',ctx);
+    // console.log('ctx.request',ctx.request);
+    // console.log('ctx.session',ctx.session);
+    if(ctx.session.userId){
+        ctx.redirect('/auth/dashboard');
+    }else{
+        await ctx.render('login');
+    }
 }));
 
-router.use(route.post('/login', function(ctx, res) {
+router.use(route.post('/login', async function (ctx) {
     var req = ctx.req;
-    return authService.validateLogin({mail:req.body.mail, password: req.body.password})
-    .then(function(user){
-        req.session.user = user;
-        res.render('dashboard');
-    })
-    .catch((err)=>{
-        res.render('login', {error: err.message});
-    });
+    var body = ctx.request.body;
+    try {
+        var user = await authService.validateLogin({ mail: body.mail, password: body.password });
+        ctx.state.user = user;
+        ctx.session.userId = user.id;
+        return ctx.redirect('dashboard');
+    } catch (err) {
+        logger.error(err);
+        return ctx.render('login', { error: err.message });
+    }
 }));
 
-router.use(route.get('/dashboard', function(req, res) {
-    console.log('',req.session);
-    res.render('dashboard', {});
+router.use(route.get('/dashboard', async function (ctx) {
+    await ctx.render('dashboard', {});
 }));
 
-router.use(route.get('/logout', function(ctx) {
-    delete ctx.session.user;
+router.use(route.post('/logout', async function (ctx) {
+    delete ctx.session.userId;
     ctx.redirect('/');
 }));

@@ -5,16 +5,14 @@ var render = require('koa-ejs');
 var log4js = require('log4js');
 var path = require('path');
 var bodyParser = require('koa-bodyparser');
+const userDao = require('./dao/userDao');
+const sessionService = require('./service/sessionService');
 import co from 'co';
 import session from "koa-session2";
 var mount = require('koa-mount');
 var compress = require('koa-compress');
-const serve = require('koa-better-serve');
-//var cookieParser = require('cookie-parser');
-//var csrf = require('csurf');
+const serve = require('koa-static');
 var CSRF = require('koa-csrf');
-//var csrfProtection = csrf({ cookie: true });
-//var MySQLStore = require('express-mysql-session')(session);
 var db = require('./utils/mysqlDB');
 
 log4js.configure({
@@ -35,7 +33,10 @@ render(app, {
 });
 app.context.render = co.wrap(app.context.render);
 
-app.use(co.wrap(compress({})));
+app.use(convert(compress({
+    threshold: 2048,
+    flush: require('zlib').Z_SYNC_FLUSH
+})));
 
 app.use(async function logging(ctx,next){
     const start = Date.now();
@@ -47,11 +48,13 @@ app.use(async function logging(ctx,next){
     });
 });
 
+app.use(serve(__dirname + '/../public'));
+
 app.use(session({
     // secret:'asdf',
     // saveUninitialized:false,
     // resave:false,
-    // store:new MySQLStore({},db.pool)
+    store: sessionService
 }));
 
 app.use(convert(bodyParser()));
@@ -73,6 +76,12 @@ app.use(async function(ctx, next){
     ctx.state.req = ctx.req;
     ctx.state.res = ctx.res;
     ctx.state.csrfToken = ctx.csrf;
+    ctx.state.session = ctx.session;
+    if(ctx.session.userId){
+        ctx.state.user = await userDao.getOneById(ctx.session.userId);
+    }else{
+        ctx.state.user = undefined;
+    }
     await next();
 });
 
@@ -91,6 +100,7 @@ app.use(async function (ctx, next) {
             ctx.status = 403;
             ctx.body = ('form not transmitted correctly, you are save now :-)');
         }else{
+            logger.error(err);
             ctx.body = err.message;
         }
     }
@@ -100,14 +110,14 @@ app.use(async function (ctx, next) {
 
 app.use(mount('/auth',require('./routes/authRouter')));
 
+
 app.use(async function ensureAuthUser(ctx,next){
     if(ctx.session.user){
-        return next();
+        await next();
     }else{
-        throw new Error('permission denied'+ctx.req.url);
+        throw new Error('permission denied '+ctx.req.url);
     }
 });
 
-app.use(serve(__dirname + '/../public'));
 
 app.listen(process.env.PORT || 3000);
