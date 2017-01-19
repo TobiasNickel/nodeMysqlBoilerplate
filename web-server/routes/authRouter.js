@@ -1,8 +1,11 @@
-var logger = require('log4js').getLogger('{server}{webServer.js}');
-var authService = require('../service/authService');
+import * as log4js from 'log4js';
+import * as authService from '../service/authService';
 
-var Koa = require('koa');
-var route = require('koa-route');
+import * as Koa from 'koa';
+import * as route from 'koa-route';
+
+var logger = log4js.getLogger('{server}{webServer.js}');
+
 var router = new Koa();
 module.exports = router;
 
@@ -11,7 +14,6 @@ router.use(route.get('/register', async function (ctx) {
 }));
 
 router.use(route.post('/register', async function (ctx) {
-    var req = ctx.req;
     var body = ctx.request.body;
     if (body.password != body.passwordRepeat) {
         await ctx.render('register', {
@@ -20,13 +22,11 @@ router.use(route.post('/register', async function (ctx) {
         return;
     }
     try{
-        console.log('register body',body)
         var user = await authService.register({
             name: body.name,
             mail: body.mail,
             password: body.password
         });
-        console.log('new registered user',user);
         ctx.session.userId = user.id;
         ctx.redirect('/auth/dashboard');
     }catch(err){
@@ -37,9 +37,6 @@ router.use(route.post('/register', async function (ctx) {
 }));
 
 router.use(route.get('/login', async function (ctx) {
-    // console.log('ctx',ctx);
-    // console.log('ctx.request',ctx.request);
-    // console.log('ctx.session',ctx.session);
     if(ctx.session.userId){
         ctx.redirect('/auth/dashboard');
     }else{
@@ -48,13 +45,16 @@ router.use(route.get('/login', async function (ctx) {
 }));
 
 router.use(route.post('/login', async function (ctx) {
-    var req = ctx.req;
     var body = ctx.request.body;
     try {
         var user = await authService.validateLogin({ mail: body.mail, password: body.password });
-        ctx.state.user = user;
-        ctx.session.userId = user.id;
-        return ctx.redirect('dashboard');
+        if(user){
+            ctx.state.user = user;
+            ctx.session.userId = user.id;
+            return ctx.redirect('dashboard');
+        }else{
+            return ctx.render('login', { error: 'invalid login' });
+        }
     } catch (err) {
         logger.error(err);
         return ctx.render('login', { error: err.message });

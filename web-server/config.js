@@ -5,7 +5,7 @@ module.exports = {
         password: '111111',
         database: 'boilerplate',
         debug: false,
-        logQueries: false
+        logQueries: true
 
     },
     secred: 'tobias is the very best'

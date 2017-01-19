@@ -1,19 +1,18 @@
-var Koa = require('koa');
-var convert = require('koa-convert');
-var route = require('koa-route');
-var render = require('koa-ejs');
-var log4js = require('log4js');
-var path = require('path');
-var bodyParser = require('koa-bodyparser');
-const userDao = require('./dao/userDao');
-const sessionService = require('./service/sessionService');
+import * as Koa from 'koa';
+import * as convert from 'koa-convert';
+import * as route from 'koa-route';
+import * as render from 'koa-ejs';
+import * as log4js from 'log4js';
+import * as path from 'path';
+import * as bodyParser from 'koa-bodyparser';
+import * as userDao from './dao/userDao';
+import * as sessionService from './service/sessionService';
 import co from 'co';
-import session from "koa-session2";
-var mount = require('koa-mount');
-var compress = require('koa-compress');
-const serve = require('koa-static');
-var CSRF = require('koa-csrf');
-var db = require('./utils/mysqlDB');
+import session from 'koa-session2';
+import * as mount from 'koa-mount';
+import * as compress from 'koa-compress';
+import * as serve from 'koa-static';
+import * as  CSRF from 'koa-csrf';
 
 log4js.configure({
   appenders: [
@@ -59,7 +58,6 @@ app.use(session({
 
 app.use(convert(bodyParser()));
 
-
 app.use(convert(new CSRF.default({
     invalidSessionSecretMessage: 'Invalid session secret ff',
     invalidSessionSecretStatusCode: 403,
@@ -86,7 +84,6 @@ app.use(async function(ctx, next){
 });
 
 app.use(route.get('/', async function(ctx){
-    console.log('route /');
     await ctx.render('index');
 }));
 
@@ -109,6 +106,7 @@ app.use(async function (ctx, next) {
 
 
 app.use(mount('/auth',require('./routes/authRouter')));
+app.use(mount('/api/user', require('./routes/api/userAPIRouter')));
 
 
 app.use(async function ensureAuthUser(ctx,next){

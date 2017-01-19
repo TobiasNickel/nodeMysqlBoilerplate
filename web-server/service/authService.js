@@ -8,7 +8,7 @@ authService.validateLogin = async function (options) {
     const password = options.password;
     const user = await userDao.getOneByMail(mail);
     if(user && user.password == hash(mail, password)) return user;
-    throw new Error('wrong login');
+    return undefined;
 };
 /**
  * @param params {object}
