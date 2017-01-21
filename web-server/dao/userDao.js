@@ -4,7 +4,7 @@ var userDao = {
     tableName: 'user',
     fields: { // fields in the table
         id: {
-            type: "int AUTO_INCREMENT",
+            type: 'int AUTO_INCREMENT',
             primary: true
         },
         name: {

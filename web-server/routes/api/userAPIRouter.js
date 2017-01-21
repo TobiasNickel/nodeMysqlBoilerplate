@@ -4,17 +4,45 @@ import * as route from 'koa-route';
 import * as mount from 'koa-mount';
 import * as userDao from '../../dao/userDao';
 import * as daoToRestRouter from '../../utils/daoToRestRouter';
+import * as md5 from 'md5';
 
 var router = new Koa();
 module.exports = router;
 
-router.use(async function(ctx,next){
-    console.log('hello from userAPIRouter');
-    await next();
-});
+router.use(mount('/', daoToRestRouter.daoToRestRouter(userDao, {
+    inputFilter: async function(ctx,newUser, oldUser){
+        if(newUser.password) {
+            let password = newUser.password+'';
+            if(password.length<6)return false;
+            var email = newUser.email || oldUser.email;
+            if(!email)return false;
+            newUser.password = md5(email+':'+newUser.password);
+        }
 
-// router.use(route.get('/:id',async function(ctx,id){
-//     ctx.body=id;
-// }))
-
-router.use(mount('/', daoToRestRouter.daoToRestRouter(userDao)));
+        if(!oldUser){
+            // insert
+        }else if(!newUser){
+            // delete
+        }else {
+            // update
+            if(newUser.email){
+                if(newUser.email!=oldUser.email)return false;
+            }
+        }
+        return newUser;
+    },
+    outputFilter: async function(ctx,user){
+        if(user.registrationTime){
+            user.registrationTime = parseInt((user.registrationTime||new Date()).getTime()/1000);
+        }else{
+            user.registrationTime = null;
+        }
+        user.verified = !!user.verified;
+        delete user.password;
+        return user;
+    },
+    searchableFields: ['name','mail','id'],
+    fulltextFields: ['name','mail']
+    //todo: add options for paging
+    //todo: add options for search (allowence), fulltext...
+})));

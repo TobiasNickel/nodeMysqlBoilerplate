@@ -4,7 +4,7 @@ var sessionDao = {
     tableName: 'session',
     fields: { // fields in the table
         id: {
-            type: "char(64)",
+            type: 'char(64)',
             primary: true
         },
         data: {
