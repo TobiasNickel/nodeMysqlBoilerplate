@@ -97,7 +97,7 @@ app.use(async function (ctx, next) {
             ctx.status = 403;
             ctx.body = ('form not transmitted correctly, you are save now :-)');
         }else{
-            logger.error(err);
+            console.log(err);
             ctx.body = err.message;
         }
     }

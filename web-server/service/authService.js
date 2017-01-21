@@ -6,9 +6,7 @@ const authService = module.exports;
 authService.validateLogin = async function (options) {
     const mail = options.mail;
     const password = options.password;
-    const user = await userDao.getOneByMail(mail);
-    if(user && user.password == hash(mail, password)) return user;
-    return undefined;
+    return await userDao.findOneWhere({mail:mail,password:hash(mail, password)});
 };
 /**
  * @param params {object}
