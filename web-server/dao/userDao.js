@@ -23,7 +23,9 @@ var userDao = {
             type: 'datetime'
         },
     },
-    has: {},
+    has: {
+        sessions: { tableName: 'session', foreignKey: 'userId', localField: 'id', multiple: true }
+    },
     map:function(user){
         if(user.registrationTime){
             user.registrationTime = parseInt(user.registrationTime.getTime()/1000);

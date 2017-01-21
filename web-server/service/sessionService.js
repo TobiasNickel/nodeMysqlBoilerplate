@@ -5,7 +5,7 @@ const service = module.exports;
 service.get = async function(id){
     var session = await sessionDao.getOneById(id);
     if(!session){return {};}
-    return JSON.parse(session.data);
+    return session.data;
 };
 
 service.set = async function(sessionData,opts){
@@ -13,7 +13,7 @@ service.set = async function(sessionData,opts){
     if(id){
         var session = {
             id:id,
-            data:JSON.stringify(sessionData),
+            data:sessionData,
             userId:sessionData.userId,
             lastAccess: new Date()
         };
@@ -22,7 +22,7 @@ service.set = async function(sessionData,opts){
         var newId = createSessionId();
         var session = {
             id: newId,
-            data: JSON.stringify(sessionData),
+            data: sessionData,
             userId: sessionData.userId,
             lastAccess: new Date()
         };

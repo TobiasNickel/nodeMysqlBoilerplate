@@ -11,7 +11,7 @@ module.exports = router;
 
 router.use(mount('/', daoToRestRouter.daoToRestRouter(userDao, {
     inputFilter: async function(ctx,newUser, oldUser){
-        if(newUser.password) {
+        if(newUser && newUser.password) {
             let password = newUser.password+'';
             if(password.length<6)return false;
             var email = newUser.email || oldUser.email;
@@ -38,10 +38,12 @@ router.use(mount('/', daoToRestRouter.daoToRestRouter(userDao, {
     },
     outputFilter: async function(ctx,user){
         user.verified = !!user.verified;
+        //await userDao.fetchSessions(user);
         return user;
     },
     searchableFields: ['name','mail','id'],
-    fulltextFields: ['name','mail']
+    fulltextFields: ['name','mail'],
+    fetchableFields: ['sessions']
     //todo: add options for paging
     //todo: add options for search (allowence), fulltext...
 })));

@@ -29,8 +29,13 @@ m.daoToRestRouter = function (dao, options) {
     const defaultPageSize = options.pageSize || 10;
     const searchableFields = options.searchableFields || ['id'];
     const fulltextFields = options.fillTextFields || searchableFields;
+    const fetchableFields = options.fetchableFields || [];
     const allowChangesOnGet = (options.allowChangesOnGet !== undefined) ? !!options.changeOnGet : true;
-
+    const defaultOrder = options.defaultOrder || undefined;
+    
+    const _escapeName = function(str){
+        return dao.db.pool.escape(str).substr(1,str.length);
+    };
     /**
      * 
      * 
@@ -56,7 +61,7 @@ m.daoToRestRouter = function (dao, options) {
      * @returns
      */
     const deleteHandler = async function (ctx, id) {
-        if(_.isNaN(parseInt(id))){
+        if (_.isNaN(parseInt(id))) {
             ctx.body = false;
             return;
         }
@@ -67,10 +72,9 @@ m.daoToRestRouter = function (dao, options) {
         }
         const shouldDelete = await inputFilter(ctx, undefined, item);
         if (shouldDelete) {
-            ctx.body = await dao.deleteById(id);
-        } else {
-            ctx.body = false;
+            await dao.remove(id);
         }
+        ctx.body = true;
     };
 
     /**
@@ -80,7 +84,7 @@ m.daoToRestRouter = function (dao, options) {
      * @param {String} id
      */
     const getByIdHandler = async function (ctx, id) {
-        if(_.isNaN(parseInt(id))){
+        if (_.isNaN(parseInt(id))) {
             ctx.body = false;
             return;
         }
@@ -90,27 +94,31 @@ m.daoToRestRouter = function (dao, options) {
         } else {
             ctx.body = false;
         }
+
+        if (ctx.query && ctx.query._fetch) {
+            await _fetch(item, ctx.query._fetch);
+        }
     };
 
-    const updateHandler = async function(ctx,id){
-        if(_.isNaN(parseInt(id))){
+    const updateHandler = async function (ctx, id) {
+        if (_.isNaN(parseInt(id))) {
             ctx.body = false;
             return;
         }
-        const updates = _.extend({id:id}, ctx.query, ctx.req.body);
+        const updates = _.extend({ id: id }, ctx.query, ctx.req.body);
         var item = await dao.getOneById(id);
-        if(!item){
+        if (!item) {
             ctx.body = false;
             return;
         }
-        const updateSet = await inputFilter(ctx,updates, item);
-        if(!updateSet){
+        const updateSet = await inputFilter(ctx, updates, item);
+        if (!updateSet) {
             ctx.body = false;
             return;
         }
         const keys = Object.keys(updateSet);
-        if(keys.length>1){
-            await dao.saveOne(updateSet)
+        if (keys.length > 1) {
+            await dao.saveOne(updateSet);
         }
         ctx.body = true;
     };
@@ -134,9 +142,19 @@ m.daoToRestRouter = function (dao, options) {
         }
         var page = parseInt(params._page) || 0;
         var items = [];
+
+        var order = undefined;
+        if(query._order){
+            if(query._direction && query._direction.toLowerCase().trim() === 'desc'){
+                order = _escapeName(query._order) + ' desc';
+            }else{
+                order = _escapeName(query._order) + ' asc';
+            }
+        }
+
         if (!queryProps.length) {
             //get all
-            items = await dao.getAll(page, pageSize);
+            items = await dao.getAll(order, page, pageSize);
         } else {
             if (queryProps.length === 1 && queryProps[0] === 'q') {
                 // todo: fulltext
@@ -147,7 +165,7 @@ m.daoToRestRouter = function (dao, options) {
                     where.push(propName + ' LIKE ? ');
                     params.push(searchString);
                 });
-                items = await dao.where(where.join(' OR '), params, page, pageSize);
+                items = await dao.where(where.join(' OR '), params, order, page, pageSize);
             } else {
                 //property filter
                 queryProps = _.intersection(queryProps, searchableFields);
@@ -179,12 +197,15 @@ m.daoToRestRouter = function (dao, options) {
                 }
             }
         }
+
         const output = [];
         for (var item of items) {
             let out = await outputFilter(ctx, item);
             if (out) output.push(out);
         }
-
+        if (query._fetch) {
+            await _fetch(output, query._fetch);
+        }
         ctx.body = {
             items: output,
             count: output.length,
@@ -192,14 +213,25 @@ m.daoToRestRouter = function (dao, options) {
             pageCount: items.pageCount
         };
     };
-    if(allowChangesOnGet){
+
+    const _fetch = async function (items, extendNames) {
+        const wantedFields = extendNames.split(',');
+        const fetchNames = _.intersection(wantedFields, fetchableFields);
+
+        for (var name of fetchNames) {
+            await dao['fetch' + capitalize(name)](items);
+        }
+        return items;
+    };
+
+    if (allowChangesOnGet) {
         router.use(route.get('/create', createHandler));
         router.use(route.get('/delete/:id', deleteHandler));
-        router.use(route.get('/update/:id', updateHandler))
+        router.use(route.get('/update/:id', updateHandler));
     }
     router.use(route.post('/', createHandler));
     router.use(route.delete('/:id', deleteHandler));
-    router.use(route.put('/:id',updateHandler));
+    router.use(route.put('/:id', updateHandler));
     router.use(route.get('/:id', getByIdHandler));
     router.use(route.get('/', searchHandler));
 
@@ -219,3 +251,8 @@ m.transactionMiddleware = function () {
         }
     };
 };
+
+function capitalize(s) {
+    return s[0].toUpperCase() + s.substr(1);
+}
+
