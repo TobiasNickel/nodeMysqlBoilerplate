@@ -38,7 +38,7 @@
     "koa-static": "^3.0.0",
     "log4js": "^0.6.38",
     "md5": "^2.2.1",
-    "tmysqlpromisedao": "^1.4.15",
+    "tmysqlpromisedao": "^1.7.17",
     "ts-node": "^2.0.0",
     "typescript": "^2.1.4",
     "underscore": "^1.8.3"
