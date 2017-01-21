@@ -29,6 +29,7 @@ m.daoToRestRouter = function (dao, options) {
     const defaultPageSize = options.pageSize || 10;
     const searchableFields = options.searchableFields || ['id'];
     const fulltextFields = options.fillTextFields || searchableFields;
+    const allowChangesOnGet = (options.allowChangesOnGet !== undefined) ? !!options.changeOnGet : true;
 
     /**
      * 
@@ -39,7 +40,7 @@ m.daoToRestRouter = function (dao, options) {
         const newItem = _.extend({}, ctx.query, ctx.req.body);
         const validatedItem = await inputFilter(ctx, newItem);
         if (validatedItem) {
-            const id = await dao.insert(newItem);
+            const id = await dao.insert(validatedItem);
             const item = await dao.getOneById(id);
             ctx.body = await outputFilter(ctx, item);
         } else {
@@ -55,6 +56,10 @@ m.daoToRestRouter = function (dao, options) {
      * @returns
      */
     const deleteHandler = async function (ctx, id) {
+        if(_.isNaN(parseInt(id))){
+            ctx.body = false;
+            return;
+        }
         const item = await dao.getOneById(id);
         if (!item) {
             ctx.body = true;
@@ -75,12 +80,39 @@ m.daoToRestRouter = function (dao, options) {
      * @param {String} id
      */
     const getByIdHandler = async function (ctx, id) {
+        if(_.isNaN(parseInt(id))){
+            ctx.body = false;
+            return;
+        }
         const item = await dao.getOneById(parseInt(id));
         if (item) {
             ctx.body = await outputFilter(ctx, item);
         } else {
             ctx.body = false;
         }
+    };
+
+    const updateHandler = async function(ctx,id){
+        if(_.isNaN(parseInt(id))){
+            ctx.body = false;
+            return;
+        }
+        const updates = _.extend({id:id}, ctx.query, ctx.req.body);
+        var item = await dao.getOneById(id);
+        if(!item){
+            ctx.body = false;
+            return;
+        }
+        const updateSet = await inputFilter(ctx,updates, item);
+        if(!updateSet){
+            ctx.body = false;
+            return;
+        }
+        const keys = Object.keys(updateSet);
+        if(keys.length>1){
+            await dao.saveOne(updateSet)
+        }
+        ctx.body = true;
     };
 
     const searchHandler = async function (ctx) {
@@ -160,11 +192,14 @@ m.daoToRestRouter = function (dao, options) {
             pageCount: items.pageCount
         };
     };
-
-    router.use(route.get('/create', createHandler));
+    if(allowChangesOnGet){
+        router.use(route.get('/create', createHandler));
+        router.use(route.get('/delete/:id', deleteHandler));
+        router.use(route.get('/update/:id', updateHandler))
+    }
     router.use(route.post('/', createHandler));
-    router.use(route.get('/delete/:id', deleteHandler));
     router.use(route.delete('/:id', deleteHandler));
+    router.use(route.put('/:id',updateHandler));
     router.use(route.get('/:id', getByIdHandler));
     router.use(route.get('/', searchHandler));
 

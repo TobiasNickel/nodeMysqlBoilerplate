@@ -21,24 +21,23 @@ router.use(mount('/', daoToRestRouter.daoToRestRouter(userDao, {
 
         if(!oldUser){
             // insert
+            return false;
         }else if(!newUser){
             // delete
+            return false;
         }else {
             // update
             if(newUser.email){
                 if(newUser.email!=oldUser.email)return false;
             }
+            if(newUser.registrationTime){
+                return false;
+            }
         }
         return newUser;
     },
     outputFilter: async function(ctx,user){
-        if(user.registrationTime){
-            user.registrationTime = parseInt((user.registrationTime||new Date()).getTime()/1000);
-        }else{
-            user.registrationTime = null;
-        }
         user.verified = !!user.verified;
-        delete user.password;
         return user;
     },
     searchableFields: ['name','mail','id'],

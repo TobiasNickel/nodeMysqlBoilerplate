@@ -23,8 +23,19 @@ var userDao = {
             type: 'datetime'
         },
     },
-    has: {}
+    has: {},
+    map:function(user){
+        if(user.registrationTime){
+            user.registrationTime = parseInt(user.registrationTime.getTime()/1000);
+        }else{
+            user.registrationTime = null;
+        }
+        delete user.password;
+        return user;
+    }
 };
 module.exports = userDao;
 db.prepareDao(userDao);
 userDao.createTable().catch(err=>console.log(err));
+
+
