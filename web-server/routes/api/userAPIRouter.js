@@ -3,13 +3,13 @@ import * as Koa from 'koa';
 import * as route from 'koa-route';
 import * as mount from 'koa-mount';
 import * as userDao from '../../dao/userDao';
-import * as daoToRestRouter from '../../utils/daoToRestRouter';
+import * as dao2koa from 'dao2koa';
 import * as md5 from 'md5';
 
 var router = new Koa();
 module.exports = router;
 
-router.use(mount('/', daoToRestRouter.daoToRestRouter(userDao, {
+router.use(mount('/', dao2koa.daoToRestRouter(userDao, {
     inputFilter: async function(ctx,newUser, oldUser){
         if(newUser && newUser.password) {
             let password = newUser.password+'';
